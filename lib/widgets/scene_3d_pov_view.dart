@@ -78,13 +78,6 @@ class _Scene3DPOVViewState extends State<Scene3DPOVView> {
     final clampedIndex = widget.currentPositionIndex.clamp(0, _points3D!.length - 1);
     final currentPos = _points3D![clampedIndex];
 
-    // Get direction vector for cyclist (looking forward)
-    vector.Vector3 forwardDir = vector.Vector3(0, 0, 1);
-    if (clampedIndex < _points3D!.length - 1) {
-      final nextPos = _points3D![clampedIndex + 1];
-      forwardDir = (nextPos - currentPos).normalized();
-    }
-
     // Create a "road" view: show the path ahead from cyclist's perspective
     List<Model3D> figures = [];
 
@@ -102,7 +95,7 @@ class _Scene3DPOVViewState extends State<Scene3DPOVView> {
         figures.add(Line3D(
           p1,
           p2,
-          width: 8,
+          width: 8.0,
           color: Colors.amber.shade400,
         ));
 
@@ -111,7 +104,7 @@ class _Scene3DPOVViewState extends State<Scene3DPOVView> {
         figures.add(Line3D(
           p1 + vector.Vector3(-3, 0, 0),
           p2 + vector.Vector3(-3, 0, 0),
-          width: 2,
+          width: 2.0,
           color: Colors.white.withValues(alpha: 0.6),
         ));
 
@@ -119,7 +112,7 @@ class _Scene3DPOVViewState extends State<Scene3DPOVView> {
         figures.add(Line3D(
           p1 + vector.Vector3(3, 0, 0),
           p2 + vector.Vector3(3, 0, 0),
-          width: 2,
+          width: 2.0,
           color: Colors.white.withValues(alpha: 0.6),
         ));
       }
@@ -144,7 +137,7 @@ class _Scene3DPOVViewState extends State<Scene3DPOVView> {
     }
 
     return Container(
-      color: Colors.sky[900], // Sky-like color for POV
+      color: Colors.blueGrey[900], // Dark blue-grey for POV perspective
       child: DiTreDi(
         figures: figures,
         controller: _controller,
@@ -152,7 +145,6 @@ class _Scene3DPOVViewState extends State<Scene3DPOVView> {
           defaultPointWidth: 2,
           supportZIndex: true,
           perspective: true,
-          lightColor: Color(0xFF999999),
         ),
       ),
     );

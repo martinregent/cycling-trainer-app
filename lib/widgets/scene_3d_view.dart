@@ -123,7 +123,6 @@ class _Scene3DViewState extends State<Scene3DView> {
           defaultPointWidth: 2,
           supportZIndex: true,
           perspective: true,
-          lightColor: Color(0xFF666666), // Add ambient lighting
         ),
       ),
     );
@@ -143,7 +142,7 @@ class _Scene3DViewState extends State<Scene3DView> {
       final color = isMajor
         ? Colors.grey[600]!.withValues(alpha: 0.4)
         : Colors.grey[700]!.withValues(alpha: 0.2);
-      final width = isMajor ? 2 : 1;
+      final width = isMajor ? 2.0 : 1.0;
 
       lines.add(Line3D(
         vector.Vector3(x, y, -gridSize),
@@ -158,7 +157,7 @@ class _Scene3DViewState extends State<Scene3DView> {
       final color = isMajor
         ? Colors.grey[600]!.withValues(alpha: 0.4)
         : Colors.grey[700]!.withValues(alpha: 0.2);
-      final width = isMajor ? 2 : 1;
+      final width = isMajor ? 2.0 : 1.0;
 
       lines.add(Line3D(
         vector.Vector3(-gridSize, y, z),

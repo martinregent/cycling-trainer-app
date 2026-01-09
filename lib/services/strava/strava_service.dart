@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:oauth2/oauth2.dart' as oauth2;
 import 'package:url_launcher/url_launcher.dart';
@@ -97,8 +95,7 @@ class StravaService extends ChangeNotifier {
       // Manually creating client for now as simple usage
       // In a real app we'd use Credentials.fromJson and handle refresh
       // For this demo, we assume the token is valid for the session or short term
-      final jsonData = json.decode(response.body) as Map<String, dynamic>;
-      final credentials = oauth2.Credentials.fromJson(jsonData);
+      final credentials = oauth2.Credentials.fromJson(response.body);
       _client = oauth2.Client(credentials, identifier: clientId, secret: clientSecret);
     } else {
       throw Exception('Failed to exchange token: ${response.body}');

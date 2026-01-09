@@ -30,7 +30,7 @@ class ElevationProfile extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha:0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -63,13 +63,13 @@ class ElevationProfile extends StatelessWidget {
                         .map((p) => FlSpot(p.distance, p.elevation))
                         .toList(),
                     isCurved: true,
-                    color: Colors.blue.withOpacity(0.5),
+                    color: Colors.blue.withValues(alpha:0.5),
                     barWidth: 2,
                     isStrokeCapRound: true,
                     dotData: const FlDotData(show: false),
                     belowBarData: BarAreaData(
                       show: true,
-                      color: Colors.blue.withOpacity(0.1),
+                      color: Colors.blue.withValues(alpha:0.1),
                     ),
                   ),
                 ],

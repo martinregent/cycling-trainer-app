@@ -136,7 +136,7 @@ class _Scene3DViewState extends State<Scene3DView> {
     const y = -2.0; // Slightly below cyclist
 
     // Color for grid
-    final color = Colors.white.withOpacity(0.1);
+    final color = Colors.white.withValues(alpha:0.1);
 
     for (var x = -gridSize; x <= gridSize; x += step) {
       lines.add(Line3D(

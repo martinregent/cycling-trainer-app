@@ -6,6 +6,7 @@ import 'models/gpx_route.dart';
 import 'providers/bluetooth_provider.dart';
 import 'screens/home_screen.dart';
 import 'services/strava/strava_service.dart';
+import 'config/strava_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,12 +39,11 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => BluetoothProvider()),
-        // StravaService will be initialized when credentials are available
-        // For now, create a placeholder to avoid errors at startup
+        // StravaService initialized with credentials from strava_config.dart
         Provider(
           create: (_) => StravaService(
-            clientId: '',
-            clientSecret: '',
+            clientId: StravaConfig.clientId,
+            clientSecret: StravaConfig.clientSecret,
           ),
           dispose: (_, service) => service.dispose(),
         ),

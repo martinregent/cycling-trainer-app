@@ -18,7 +18,10 @@ class StravaService extends ChangeNotifier {
   late AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
 
-  StravaService({required this.clientId, required this.clientSecret});
+  StravaService({required this.clientId, required this.clientSecret}) {
+    // Automatically initialize on construction
+    initialize();
+  }
 
   bool get isAuthenticated => _client?.credentials.accessToken != null;
 

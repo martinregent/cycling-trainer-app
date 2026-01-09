@@ -28,7 +28,7 @@ jobs:
         run: flutter analyze
 
       - name: Build iOS simulator
-        run: flutter build ios --simulator --profile
+        run: flutter build ios --simulator
 
       - name: Upload build artifact
         if: success()

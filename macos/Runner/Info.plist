@@ -39,5 +39,9 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Connexion Elite Suito et Whoop 5 pour entraînement cycliste</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Connexion aux périphériques Bluetooth pour mesurer puissance et fréquence cardiaque</string>
 </dict>
 </plist>

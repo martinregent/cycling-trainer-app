@@ -23,20 +23,28 @@ class StravaService extends ChangeNotifier {
   bool get isAuthenticated => _client?.credentials.accessToken != null;
 
   void initialize() {
-    _appLinks = AppLinks();
-    _linkSubscription = _appLinks.uriLinkStream.listen((Uri? uri) {
-      if (uri != null) {
-        debugPrint('Deep Link received: $uri');
-        if (uri.toString().startsWith('cyclingtrainer://oauth/callback')) {
-          handleRedirect(uri);
+    try {
+      _appLinks = AppLinks();
+      _linkSubscription = _appLinks.uriLinkStream.listen((Uri? uri) {
+        if (uri != null) {
+          debugPrint('Deep Link received: $uri');
+          if (uri.toString().startsWith('cyclingtrainer://oauth/callback')) {
+            handleRedirect(uri);
+          }
         }
-      }
-    });
+      });
+    } catch (e) {
+      debugPrint('Error initializing AppLinks: $e');
+    }
   }
 
   @override
   void dispose() {
-    _linkSubscription?.cancel();
+    try {
+      _linkSubscription?.cancel();
+    } catch (e) {
+      debugPrint('Error disposing AppLinks: $e');
+    }
     super.dispose();
   }
 

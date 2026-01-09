@@ -10,18 +10,22 @@ import 'services/strava/strava_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Hive
-  await Hive.initFlutter();
+  try {
+    // Initialize Hive
+    await Hive.initFlutter();
 
-  // Register adapters
-  Hive.registerAdapter(WorkoutAdapter());
-  Hive.registerAdapter(WorkoutDataPointAdapter());
-  Hive.registerAdapter(GPXRouteAdapter());
-  Hive.registerAdapter(TrackPointAdapter());
+    // Register adapters
+    Hive.registerAdapter(WorkoutAdapter());
+    Hive.registerAdapter(WorkoutDataPointAdapter());
+    Hive.registerAdapter(GPXRouteAdapter());
+    Hive.registerAdapter(TrackPointAdapter());
 
-  // Open boxes
-  await Hive.openBox<Workout>('workouts');
-  await Hive.openBox<GPXRoute>('routes');
+    // Open boxes
+    await Hive.openBox<Workout>('workouts');
+    await Hive.openBox<GPXRoute>('routes');
+  } catch (e) {
+    debugPrint('Error initializing Hive: $e');
+  }
 
   runApp(const MyApp());
 }
@@ -34,11 +38,13 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => BluetoothProvider()),
+        // StravaService will be initialized when credentials are available
+        // For now, create a placeholder to avoid errors at startup
         Provider(
           create: (_) => StravaService(
-            clientId: 'YOUR_CLIENT_ID',
-            clientSecret: 'YOUR_CLIENT_SECRET',
-          )..initialize(), // We'll add this method
+            clientId: '',
+            clientSecret: '',
+          ),
           dispose: (_, service) => service.dispose(),
         ),
       ],

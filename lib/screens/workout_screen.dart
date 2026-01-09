@@ -6,6 +6,7 @@ import '../widgets/metric_tile.dart';
 import '../widgets/route_map.dart';
 import '../widgets/elevation_profile.dart';
 import '../widgets/scene_3d_view.dart';
+import '../widgets/scene_3d_pov_view.dart';
 import 'package:uuid/uuid.dart';
 import '../models/workout.dart';
 import '../repositories/workout_repository.dart';
@@ -22,7 +23,9 @@ class WorkoutScreen extends StatefulWidget {
 
 class _WorkoutScreenState extends State<WorkoutScreen> {
   bool _isRecording = false;
-  bool showMap = true;
+  // Visualization mode: 'map', '3d', 'pov'
+  String _viewMode = 'map';
+  bool _simulateSpeed = false; // Toggle simulation mode when no trainer
   DateTime? _startTime;
   Timer? _timer;
   int _elapsedSeconds = 0;
@@ -44,10 +47,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
           setState(() {
             _elapsedSeconds++;
-            // Simulate 30km/h = 8.33 m/s for testing visualization if no device connected
-            // Only if bluetooth speed is 0
             final provider = Provider.of<BluetoothProvider>(context, listen: false);
-            double currentSpeed = provider.speed > 0 ? provider.speed : (provider.connectedTrainer != null ? 0 : 30.0);
+            // Use trainer speed if available, otherwise use simulation if enabled
+            double currentSpeed = provider.speed > 0
+              ? provider.speed
+              : (provider.connectedTrainer != null ? 0 : (_simulateSpeed ? 30.0 : 0.0));
             
             _totalDistance += (currentSpeed / 3.6);  // speed is km/h, convert to m/s
             
@@ -274,32 +278,44 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
                 const SizedBox(height: 24),
 
-                // Visualisation (Map ou 3D)
-                if (widget.route != null) ...[ 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () => setState(() => showMap = true),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: showMap ? Theme.of(context).primaryColor : Colors.grey[300],
-                          foregroundColor: showMap ? Colors.white : Colors.black,
+                // Visualisation (Map, 3D isometric, or POV)
+                if (widget.route != null) ...[
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () => setState(() => _viewMode = 'map'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _viewMode == 'map' ? Theme.of(context).primaryColor : Colors.grey[300],
+                            foregroundColor: _viewMode == 'map' ? Colors.white : Colors.black,
+                          ),
+                          child: const Text('Carte'),
                         ),
-                        child: const Text('Carte'),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: () => setState(() => showMap = false),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: !showMap ? Theme.of(context).primaryColor : Colors.grey[300],
-                          foregroundColor: !showMap ? Colors.white : Colors.black,
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () => setState(() => _viewMode = '3d'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _viewMode == '3d' ? Theme.of(context).primaryColor : Colors.grey[300],
+                            foregroundColor: _viewMode == '3d' ? Colors.white : Colors.black,
+                          ),
+                          child: const Text('3D'),
                         ),
-                        child: const Text('3D'),
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () => setState(() => _viewMode = 'pov'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _viewMode == 'pov' ? Theme.of(context).primaryColor : Colors.grey[300],
+                            foregroundColor: _viewMode == 'pov' ? Colors.white : Colors.black,
+                          ),
+                          child: const Text('POV'),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 16),
-                  if (showMap)
+                  if (_viewMode == 'map')
                     SizedBox(
                       height: 300,
                       child: RouteMap(
@@ -307,10 +323,18 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                         currentPositionIndex: currentIndex,
                       ),
                     )
-                  else
+                  else if (_viewMode == '3d')
                     SizedBox(
                       height: 300,
                       child: Scene3DView(
+                        route: widget.route!,
+                        currentPositionIndex: currentIndex,
+                      ),
+                    )
+                  else
+                    SizedBox(
+                      height: 300,
+                      child: Scene3DPOVView(
                         route: widget.route!,
                         currentPositionIndex: currentIndex,
                       ),
@@ -378,6 +402,32 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                 ),
 
                 const SizedBox(height: 32),
+
+                // Simulation Mode Toggle (only show if no trainer connected)
+                if (bluetooth.connectedTrainer == null && !_isRecording)
+                  Card(
+                    color: Colors.blue[50],
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Flexible(
+                            child: Text(
+                              'Mode simulation\n(sans trainer)',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                          ),
+                          Switch(
+                            value: _simulateSpeed,
+                            onChanged: (value) => setState(() => _simulateSpeed = value),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                const SizedBox(height: 24),
 
                 // Control Buttons
                 Row(

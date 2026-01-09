@@ -94,27 +94,28 @@ class _Scene3DViewState extends State<Scene3DView> {
     // Add ground grid first
     figures.addAll(_buildGrid(vector.Vector3.zero()));
 
-    // Add route line segments
+    // Add route line segments with better visibility
     if (centeredPoints.length > 1) {
       for (int i = 0; i < centeredPoints.length - 1; i++) {
+        // Use yellow/orange for route for better visibility
         figures.add(Line3D(
           centeredPoints[i],
           centeredPoints[i + 1],
-          width: 4,
-          color: Colors.blueAccent,
+          width: 5,
+          color: Colors.amber.shade400,
         ));
       }
     }
 
-    // Add cyclist marker
+    // Add cyclist marker with larger size
     figures.add(Point3D(
       centeredPos,
-      color: Colors.red,
-      width: 15,
+      color: Colors.red.shade600,
+      width: 20,
     ));
 
     return Container(
-      color: Colors.grey[900], // Dark background for 3D
+      color: Colors.grey[850], // Slightly lighter dark background
       child: DiTreDi(
         figures: figures,
         controller: _controller,
@@ -122,6 +123,7 @@ class _Scene3DViewState extends State<Scene3DView> {
           defaultPointWidth: 2,
           supportZIndex: true,
           perspective: true,
+          lightColor: Color(0xFF666666), // Add ambient lighting
         ),
       ),
     );
@@ -131,27 +133,37 @@ class _Scene3DViewState extends State<Scene3DView> {
     final lines = <Line3D>[];
     const gridSize = 500.0; // meters
     const step = 50.0;
-    
+
     // Grid purely based on local (0,0,0)
     const y = -2.0; // Slightly below cyclist
 
-    // Color for grid
-    final color = Colors.white.withValues(alpha:0.1);
-
+    // Use darker gray for main grid lines, lighter for minor lines
     for (var x = -gridSize; x <= gridSize; x += step) {
+      final isMajor = (x.toInt() % 200 == 0); // Every 200m is major
+      final color = isMajor
+        ? Colors.grey[600]!.withValues(alpha: 0.4)
+        : Colors.grey[700]!.withValues(alpha: 0.2);
+      final width = isMajor ? 2 : 1;
+
       lines.add(Line3D(
-        vector.Vector3(x, y, -gridSize), 
+        vector.Vector3(x, y, -gridSize),
         vector.Vector3(x, y, gridSize),
-        width: 1,
+        width: width,
         color: color,
       ));
     }
 
     for (var z = -gridSize; z <= gridSize; z += step) {
+      final isMajor = (z.toInt() % 200 == 0); // Every 200m is major
+      final color = isMajor
+        ? Colors.grey[600]!.withValues(alpha: 0.4)
+        : Colors.grey[700]!.withValues(alpha: 0.2);
+      final width = isMajor ? 2 : 1;
+
       lines.add(Line3D(
-        vector.Vector3(-gridSize, y, z), 
+        vector.Vector3(-gridSize, y, z),
         vector.Vector3(gridSize, y, z),
-        width: 1,
+        width: width,
         color: color,
       ));
     }

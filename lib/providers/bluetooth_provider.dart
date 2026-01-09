@@ -46,11 +46,16 @@ class BluetoothProvider extends ChangeNotifier {
   }
 
   void _init() {
-    // Listen to Bluetooth adapter state
-    FlutterBluePlus.adapterState.listen((state) {
-      _adapterState = state;
-      notifyListeners();
-    });
+    try {
+      // Listen to Bluetooth adapter state
+      FlutterBluePlus.adapterState.listen((state) {
+        _adapterState = state;
+        notifyListeners();
+      });
+    } catch (e) {
+      debugPrint('Error initializing Bluetooth: $e');
+      _adapterState = BluetoothAdapterState.unavailable;
+    }
   }
 
   /// Start scanning for BLE devices

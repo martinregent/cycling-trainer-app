@@ -32,7 +32,7 @@ jobs:
 
       - name: Upload build artifact
         if: success()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ios-simulator-build
           path: build/ios/iphonesimulator/
@@ -43,7 +43,7 @@ jobs:
 
       - name: Upload device build artifact
         if: success()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ios-device-build
           path: build/ios/iphoneos/

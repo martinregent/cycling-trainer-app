@@ -1,0 +1,50 @@
+name: Build iOS App
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.6'
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Run analysis
+        run: flutter analyze
+
+      - name: Build iOS simulator
+        run: flutter build ios --simulator --release
+
+      - name: Upload build artifact
+        if: success()
+        uses: actions/upload-artifact@v3
+        with:
+          name: ios-simulator-build
+          path: build/ios/iphonesimulator/
+          retention-days: 7
+
+      - name: Build iOS device
+        run: flutter build ios --no-codesign --release
+
+      - name: Upload device build artifact
+        if: success()
+        uses: actions/upload-artifact@v3
+        with:
+          name: ios-device-build
+          path: build/ios/iphoneos/
+          retention-days: 7

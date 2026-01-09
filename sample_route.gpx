@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="CyclingTrainerApp" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>Petit Tour de Paris</name>
+    <desc>Une petite boucle autour de la Tour Eiffel</desc>
+  </metadata>
+  <trk>
+    <name>Petit Tour de Paris</name>
+    <trkseg>
+      <trkpt lat="48.858370" lon="2.294481">
+        <ele>35.0</ele>
+      </trkpt>
+      <trkpt lat="48.857000" lon="2.295000">
+        <ele>36.0</ele>
+      </trkpt>
+      <trkpt lat="48.856000" lon="2.296000">
+        <ele>38.0</ele>
+      </trkpt>
+      <trkpt lat="48.855000" lon="2.297000">
+        <ele>40.0</ele>
+      </trkpt>
+      <trkpt lat="48.854000" lon="2.298000">
+        <ele>42.0</ele>
+      </trkpt>
+      <trkpt lat="48.853000" lon="2.299000">
+        <ele>45.0</ele>
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>

@@ -3,6 +3,9 @@ import 'dart:math' as math;
 import '../models/gpx_route.dart';
 
 class SlopeProfileChart extends StatelessWidget {
+  static const double chartHeight = 120.0;
+  static const double chartWidth = 300.0;
+
   final GPXRoute route;
   final int currentPositionIndex;
   final double currentDistance;
@@ -112,8 +115,6 @@ class SlopeProfileChart extends StatelessWidget {
     }
 
     final currentSlope = (segments.first['slope'] as double);
-    const double chartHeight = 120.0;
-    const double chartWidth = 300.0;
 
     return Card(
       child: Padding(
@@ -172,11 +173,11 @@ class SlopeProfileChart extends StatelessWidget {
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('0m', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                  const Text('50m', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                  const Text('100m', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                  const Text('150m', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                  const Text('200m', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                  Text('0m', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                  Text('50m', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                  Text('100m', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                  Text('150m', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                  Text('200m', style: TextStyle(fontSize: 10, color: Colors.grey)),
                 ],
               ),
             ),

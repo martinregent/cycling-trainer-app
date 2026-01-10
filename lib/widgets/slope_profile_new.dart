@@ -170,7 +170,7 @@ class SlopeProfileChart extends StatelessWidget {
             // Distance markers
             const SizedBox(
               width: chartWidth,
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('0m', style: TextStyle(fontSize: 10, color: Colors.grey)),

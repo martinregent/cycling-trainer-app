@@ -7,6 +7,7 @@ import '../widgets/route_map.dart';
 import '../widgets/elevation_profile.dart';
 import '../widgets/scene_3d_view.dart';
 import '../widgets/scene_3d_pov_view.dart';
+import '../widgets/slope_profile_widget.dart';
 import 'package:uuid/uuid.dart';
 import '../models/workout.dart';
 import '../repositories/workout_repository.dart';
@@ -234,16 +235,16 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
-                // Metrics Grid
+                // Metrics Grid (compact - 1/4 size)
                 GridView.count(
-                  crossAxisCount: 2,
+                  crossAxisCount: 4,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
-                  childAspectRatio: 1.5,
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                  childAspectRatio: 0.9,
                   children: [
                     MetricTile(
                       title: 'Puissance',
@@ -276,7 +277,17 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+
+                // Slope Profile (before map/3D visualization)
+                if (widget.route != null)
+                  SlopeProfileWidget(
+                    route: widget.route!,
+                    currentPositionIndex: currentIndex,
+                    currentDistance: _totalDistance % widget.route!.distance,
+                  ),
+
+                const SizedBox(height: 16),
 
                 // Visualisation (Map, 3D isometric, or POV)
                 if (widget.route != null) ...[

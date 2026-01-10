@@ -112,8 +112,8 @@ class SlopeProfileChart extends StatelessWidget {
     }
 
     final currentSlope = (segments.first['slope'] as double);
-    final chartHeight = 120.0;
-    final chartWidth = 300.0;
+    const double chartHeight = 120.0;
+    const double chartWidth = 300.0;
 
     return Card(
       child: Padding(
@@ -167,9 +167,9 @@ class SlopeProfileChart extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             // Distance markers
-            SizedBox(
+            const SizedBox(
               width: chartWidth,
-              child: Row(
+              child: const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('0m', style: TextStyle(fontSize: 10, color: Colors.grey)),

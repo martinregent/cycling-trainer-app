@@ -7,7 +7,7 @@ import '../widgets/route_map.dart';
 import '../widgets/elevation_profile.dart';
 import '../widgets/scene_3d_view.dart';
 import '../widgets/scene_3d_pov_view.dart';
-import '../widgets/slope_profile_widget.dart';
+import '../widgets/slope_profile_new.dart';
 import 'package:uuid/uuid.dart';
 import '../models/workout.dart';
 import '../repositories/workout_repository.dart';
@@ -281,7 +281,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
                 // Slope Profile (before map/3D visualization)
                 if (widget.route != null)
-                  SlopeProfileWidget(
+                  SlopeProfileChart(
                     route: widget.route!,
                     currentPositionIndex: currentIndex,
                     currentDistance: _totalDistance % widget.route!.distance,

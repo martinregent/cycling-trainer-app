@@ -66,8 +66,13 @@ class FTMSService {
       if (flags & 0x0001 != 0 && offset + 2 <= data.length) {
         final speedRaw = buffer.getUint16(offset, Endian.little);
         final speed = speedRaw / 100.0;
-        _speedController.add(speed);
+        if (speed >= 0 && speed <= 100) {
+          _speedController.add(speed);
+          debugPrint('FTMS Speed: ${speed.toStringAsFixed(2)} km/h (raw: $speedRaw)');
+        }
         offset += 2;
+      } else if (flags & 0x0001 == 0) {
+        debugPrint('FTMS: Speed flag (bit 0) not set in flags: 0x${flags.toRadixString(16)}');
       }
 
       // Average Speed (bit 1) - skip if present
@@ -75,12 +80,15 @@ class FTMSService {
         offset += 2;
       }
 
-      // Cadence (bit 2) - uint16, 1 RPM per unit (Elite Suito T sends actual RPM)
+      // Cadence (bit 2) - uint16, resolution 0.05 RPM per unit (Elite Suito T specific)
       if (flags & 0x0004 != 0 && offset + 2 <= data.length) {
         final cadenceRaw = buffer.getUint16(offset, Endian.little);
-        // Elite Suito T sends cadence directly in RPM (not 0.5 RPM resolution)
-        final cadence = cadenceRaw.toDouble();
-        _cadenceController.add(cadence);
+        // Elite Suito T: divide by 20 (resolution 0.05 RPM per unit)
+        final cadence = cadenceRaw / 20.0;
+        if (cadence >= 0 && cadence <= 200) {
+          _cadenceController.add(cadence);
+          debugPrint('FTMS Cadence: ${cadence.toStringAsFixed(1)} RPM (raw: $cadenceRaw)');
+        }
         offset += 2;
       }
 
@@ -132,10 +140,13 @@ class FTMSService {
         // Clamp power to valid range (0-3000W for home trainers)
         if (power >= 0 && power <= 3000) {
           _powerController.add(power);
+          debugPrint('FTMS Power: ${power.toStringAsFixed(1)} W (raw: $powerRaw)');
         } else {
           debugPrint('FTMS: Invalid power value: $power W (raw: $powerRaw)');
         }
         offset += 2;
+      } else if (flags & 0x0040 == 0) {
+        debugPrint('FTMS: Power flag (bit 6) not set in flags: 0x${flags.toRadixString(16)}');
       }
 
       // Average Power (bit 7) - skip if present
@@ -143,13 +154,11 @@ class FTMSService {
         offset += 2;
       }
 
-      // Debug logging with actual values
+      // Debug logging with summary
       debugPrint(
-          'FTMS: Power=${power?.toStringAsFixed(1) ?? "N/A"} W, '
-          'Cadence=${_cadenceController.hasListener ? "streaming" : "no listener"}, '
-          'Speed=${_speedController.hasListener ? "streaming" : "no listener"}, '
-          'Distance=${_distanceController.hasListener ? "streaming" : "no listener"}, '
-          'Flags=0x${flags.toRadixString(16)}'
+          'FTMS Data received - Flags=0x${flags.toRadixString(16)}, '
+          'Power=${power?.toStringAsFixed(1) ?? "not in this packet"} W, '
+          'DataLength=${data.length} bytes'
       );
     } catch (e) {
       debugPrint('Error parsing FTMS data: $e');

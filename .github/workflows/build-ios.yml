@@ -1,0 +1,78 @@
+name: Build iOS & macOS
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.6'
+          channel: 'stable'
+          cache: true
+
+      - name: Create Strava Config
+        run: |
+          mkdir -p lib/config
+          cat > lib/config/strava_config.dart << 'EOF'
+          // Strava API Configuration
+          // This file contains sensitive credentials and should NOT be committed to version control
+          // Add this file to .gitignore to prevent accidental exposure
+
+          class StravaConfig {
+            static const String clientId = '186990';
+            static const String clientSecret = '11a151237719c42c74127cf1eb716d97bfab6a56';
+            static const String redirectUrl = 'cyclingtrainer://oauth/callback';
+            static const String authUrl = 'https://www.strava.com/oauth/mobile/authorize';
+            static const String tokenUrl = 'https://www.strava.com/oauth/token';
+          }
+          EOF
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Run analysis
+        run: flutter analyze
+
+      - name: Build iOS simulator
+        run: flutter build ios --simulator
+
+      - name: Upload build artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator-build
+          path: build/ios/iphonesimulator/
+          retention-days: 7
+
+      - name: Build iOS device
+        run: flutter build ios --no-codesign --release
+
+      - name: Upload device build artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-device-build
+          path: build/ios/iphoneos/
+          retention-days: 7
+
+      - name: Build macOS
+        run: flutter build macos --release
+
+      - name: Upload macOS build artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-build
+          path: build/macos/Build/Products/Release/
+          retention-days: 7

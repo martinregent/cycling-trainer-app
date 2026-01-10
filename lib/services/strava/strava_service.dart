@@ -1,6 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:oauth2/oauth2.dart' as oauth2;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
@@ -14,7 +14,7 @@ class StravaService extends ChangeNotifier {
   final String clientId;
   final String clientSecret;
   
-  oauth2.Client? _client;
+  String? _accessToken;
   late AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
 
@@ -23,7 +23,8 @@ class StravaService extends ChangeNotifier {
     initialize();
   }
 
-  bool get isAuthenticated => _client?.credentials.accessToken != null;
+  bool get isAuthenticated => _accessToken != null;
+  String? get accessToken => _accessToken;
 
   void initialize() {
     try {
@@ -51,26 +52,31 @@ class StravaService extends ChangeNotifier {
     super.dispose();
   }
 
-  // OAuth Flow - Step 1: Start Authorization
+  // OAuth Flow - Step 1: Start Authorization (Manual OAuth approach)
   Future<void> authenticate() async {
-    final grant = oauth2.AuthorizationCodeGrant(
-      clientId,
-      Uri.parse(_authUrl),
-      Uri.parse(_tokenUrl),
-      secret: clientSecret,
-    );
-    
-    // Construct the authorization URL
-    var authorizationUrl = grant.getAuthorizationUrl(
-      Uri.parse(_redirectUrl),
-      scopes: ['activity:write', 'activity:read_all'],
-    );
-    
-    // Launch the URL in the browser
-    if (await canLaunchUrl(authorizationUrl)) {
-      await launchUrl(authorizationUrl, mode: LaunchMode.externalApplication);
-    } else {
-      throw 'Could not launch $authorizationUrl';
+    try {
+      // Build authorization URL manually (avoids oauth2 library scope encoding issues)
+      final authUrl = Uri.parse(_authUrl).replace(
+        queryParameters: {
+          'client_id': clientId,
+          'response_type': 'code',
+          'redirect_uri': _redirectUrl,
+          'scope': 'activity:write,activity:read_all',
+          'approval_prompt': 'force', // Force approval for new authorizations
+        },
+      );
+
+      debugPrint('Launching Strava OAuth URL: $authUrl');
+
+      // Launch the URL in the browser
+      if (await canLaunchUrl(authUrl)) {
+        await launchUrl(authUrl, mode: LaunchMode.externalApplication);
+      } else {
+        throw 'Could not launch $authUrl';
+      }
+    } catch (e) {
+      debugPrint('Error in authenticate: $e');
+      rethrow;
     }
   }
 
@@ -92,52 +98,80 @@ class StravaService extends ChangeNotifier {
   }
 
   Future<void> exchangeCodeForToken(String code) async {
-    final response = await http.post(
-      Uri.parse(_tokenUrl),
-      body: {
-        'client_id': clientId,
-        'client_secret': clientSecret,
-        'code': code,
-        'grant_type': 'authorization_code',
-      },
-    );
+    try {
+      debugPrint('Exchanging auth code for access token...');
 
-    if (response.statusCode == 200) {
-      // Manually creating client for now as simple usage
-      // In a real app we'd use Credentials.fromJson and handle refresh
-      // For this demo, we assume the token is valid for the session or short term
-      final credentials = oauth2.Credentials.fromJson(response.body);
-      _client = oauth2.Client(credentials, identifier: clientId, secret: clientSecret);
-    } else {
-      throw Exception('Failed to exchange token: ${response.body}');
+      final response = await http.post(
+        Uri.parse(_tokenUrl),
+        body: {
+          'client_id': clientId,
+          'client_secret': clientSecret,
+          'code': code,
+          'grant_type': 'authorization_code',
+        },
+      );
+
+      debugPrint('Token exchange response status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final tokenData = jsonDecode(response.body);
+        _accessToken = tokenData['access_token'] as String?;
+
+        if (_accessToken != null) {
+          debugPrint('Strava Authentication successful! Token: ${_accessToken!.substring(0, 10)}...');
+          notifyListeners();
+        } else {
+          throw Exception('No access_token in response: ${response.body}');
+        }
+      } else {
+        debugPrint('Token exchange failed: ${response.statusCode} - ${response.body}');
+        throw Exception('Failed to exchange token: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('Error in exchangeCodeForToken: $e');
+      rethrow;
     }
   }
 
   Future<void> uploadActivity(Uint8List fitData, String name, String? description) async {
-    if (_client == null) throw Exception('Not authenticated');
+    if (_accessToken == null) throw Exception('Not authenticated - no access token');
 
-    final uri = Uri.parse('https://www.strava.com/api/v3/uploads');
-    
-    final request = http.MultipartRequest('POST', uri);
-    request.headers['Authorization'] = 'Bearer ${_client!.credentials.accessToken}';
-    
-    request.files.add(http.MultipartFile.fromBytes(
-      'file',
-      fitData,
-      filename: 'activity.fit',
-    ));
-    
-    request.fields['name'] = name;
-    request.fields['data_type'] = 'fit';
-    if (description != null) {
-      request.fields['description'] = description;
-    }
+    try {
+      final uri = Uri.parse('https://www.strava.com/api/v3/uploads');
 
-    final response = await request.send();
-    
-    if (response.statusCode != 201) {
-      final respStr = await response.stream.bytesToString();
-      throw Exception('Upload failed with status: ${response.statusCode}, body: $respStr');
+      final request = http.MultipartRequest('POST', uri);
+      request.headers['Authorization'] = 'Bearer $_accessToken';
+
+      request.files.add(http.MultipartFile.fromBytes(
+        'file',
+        fitData,
+        filename: 'activity.fit',
+      ));
+
+      request.fields['name'] = name;
+      request.fields['data_type'] = 'fit';
+      if (description != null) {
+        request.fields['description'] = description;
+      }
+
+      debugPrint('Uploading activity to Strava: $name (${fitData.length} bytes)');
+
+      final response = await request.send();
+
+      debugPrint('Strava upload response status: ${response.statusCode}');
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final respStr = await response.stream.bytesToString();
+        debugPrint('Upload successful: $respStr');
+      } else {
+        final respStr = await response.stream.bytesToString();
+        debugPrint('Upload failed - Status: ${response.statusCode}');
+        debugPrint('Response: $respStr');
+        throw Exception('Upload failed with status: ${response.statusCode}, body: $respStr');
+      }
+    } catch (e) {
+      debugPrint('Error uploading activity: $e');
+      rethrow;
     }
   }
 }

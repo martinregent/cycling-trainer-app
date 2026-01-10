@@ -46,3 +46,7 @@ app.*.map.json
 
 # Sensitive Configuration Files
 lib/config/strava_config.dart
+
+# BMAD project files
+_bmad/
+_bmad-output/

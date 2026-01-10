@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -23,8 +25,8 @@ jobs:
 
       - name: Create Strava Config
         run: |
-          mkdir -p lib/config
-          cat > lib/config/strava_config.dart << 'EOF'
+          mkdir -p cycling_trainer_app/lib/config
+          cat > cycling_trainer_app/lib/config/strava_config.dart << 'EOF'
           // Strava API Configuration
           // This file contains sensitive credentials and should NOT be committed to version control
           // Add this file to .gitignore to prevent accidental exposure
@@ -39,40 +41,40 @@ jobs:
           EOF
 
       - name: Get dependencies
-        run: flutter pub get
+        run: cd cycling_trainer_app && flutter pub get
 
       - name: Run analysis
-        run: flutter analyze
+        run: cd cycling_trainer_app && flutter analyze
 
       - name: Build iOS simulator
-        run: flutter build ios --simulator
+        run: cd cycling_trainer_app && flutter build ios --simulator
 
       - name: Upload build artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: ios-simulator-build
-          path: build/ios/iphonesimulator/
+          path: cycling_trainer_app/build/ios/iphonesimulator/
           retention-days: 7
 
       - name: Build iOS device
-        run: flutter build ios --no-codesign --release
+        run: cd cycling_trainer_app && flutter build ios --no-codesign --release
 
       - name: Upload device build artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: ios-device-build
-          path: build/ios/iphoneos/
+          path: cycling_trainer_app/build/ios/iphoneos/
           retention-days: 7
 
       - name: Build macOS
-        run: flutter build macos --release
+        run: cd cycling_trainer_app && flutter build macos --release
 
       - name: Upload macOS build artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: macos-build
-          path: build/macos/Build/Products/Release/
+          path: cycling_trainer_app/build/macos/Build/Products/Release/
           retention-days: 7

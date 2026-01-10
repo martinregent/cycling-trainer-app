@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
-/// FTMS (Fitness Machine Service) implementation for Elite Suito
+/// FTMS (Fitness Machine Service) implementation for Elite Suito T
 /// Handles Indoor Bike Data characteristic (0x2AD2)
 class FTMSService {
   final BluetoothService service;
@@ -16,6 +16,10 @@ class FTMSService {
   final _cadenceController = StreamController<double>.broadcast();
   final _speedController = StreamController<double>.broadcast();
   final _distanceController = StreamController<double>.broadcast();
+
+  // For speed calculation from distance
+  double _lastDistance = 0;
+  DateTime? _lastTimestamp;
 
   Stream<double> get powerStream => _powerController.stream;
   Stream<double> get cadenceStream => _cadenceController.stream;
@@ -71,10 +75,11 @@ class FTMSService {
         offset += 2;
       }
 
-      // Cadence (bit 2) - uint16, resolution 0.5 RPM
+      // Cadence (bit 2) - uint16, 1 RPM per unit (Elite Suito T sends actual RPM)
       if (flags & 0x0004 != 0 && offset + 2 <= data.length) {
         final cadenceRaw = buffer.getUint16(offset, Endian.little);
-        final cadence = cadenceRaw / 2.0;
+        // Elite Suito T sends cadence directly in RPM (not 0.5 RPM resolution)
+        final cadence = cadenceRaw.toDouble();
         _cadenceController.add(cadence);
         offset += 2;
       }
@@ -91,6 +96,25 @@ class FTMSService {
             (buffer.getUint8(offset + 2) << 16);
         final distance = distanceRaw.toDouble();
         _distanceController.add(distance);
+
+        // Calculate speed from distance delta (Elite Suito T doesn't send speed)
+        final now = DateTime.now();
+        if (_lastTimestamp != null && distance > _lastDistance) {
+          final timeDeltaSeconds = now.difference(_lastTimestamp!).inMilliseconds / 1000.0;
+          if (timeDeltaSeconds > 0.1) { // Only calculate if enough time has passed
+            final distanceDeltaMeters = distance - _lastDistance;
+            final speedMps = distanceDeltaMeters / timeDeltaSeconds;
+            final speedKmh = speedMps * 3.6; // Convert m/s to km/h
+
+            // Only emit valid speeds (0-100 km/h)
+            if (speedKmh >= 0 && speedKmh <= 100) {
+              _speedController.add(speedKmh);
+            }
+          }
+        }
+
+        _lastDistance = distance;
+        _lastTimestamp = now;
         offset += 3;
       }
 
@@ -100,10 +124,17 @@ class FTMSService {
       }
 
       // Instantaneous Power (bit 6) - sint16, resolution 1 watt
+      double? power;
       if (flags & 0x0040 != 0 && offset + 2 <= data.length) {
         final powerRaw = buffer.getInt16(offset, Endian.little);
-        final power = powerRaw.toDouble();
-        _powerController.add(power);
+        power = powerRaw.toDouble();
+
+        // Clamp power to valid range (0-3000W for home trainers)
+        if (power >= 0 && power <= 3000) {
+          _powerController.add(power);
+        } else {
+          debugPrint('FTMS: Invalid power value: $power W (raw: $powerRaw)');
+        }
         offset += 2;
       }
 
@@ -112,10 +143,14 @@ class FTMSService {
         offset += 2;
       }
 
+      // Debug logging with actual values
       debugPrint(
-          'FTMS Data - Speed: ${_speedController.hasListener ? "streaming" : "no listener"}, '
-          'Cadence: ${_cadenceController.hasListener ? "streaming" : "no listener"}, '
-          'Power: ${_powerController.hasListener ? "streaming" : "no listener"}');
+          'FTMS: Power=${power?.toStringAsFixed(1) ?? "N/A"} W, '
+          'Cadence=${_cadenceController.hasListener ? "streaming" : "no listener"}, '
+          'Speed=${_speedController.hasListener ? "streaming" : "no listener"}, '
+          'Distance=${_distanceController.hasListener ? "streaming" : "no listener"}, '
+          'Flags=0x${flags.toRadixString(16)}'
+      );
     } catch (e) {
       debugPrint('Error parsing FTMS data: $e');
     }
